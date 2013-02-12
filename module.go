@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	mods "github.com/cwc/Gonk/modules"
 	"github.com/cwc/go-v8"
 	irc "github.com/fluffle/goirc/client"
 )
@@ -102,6 +103,8 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		target := strings.Trim(args[1].(string), `"`)
 		text := strings.Trim(args[0].(string), `"`)
 
+		// Shorten non-image URLs in the output
+		_, text = mods.ShortenUrls(text, false)
 		m.Client.Privmsg(target, text)
 
 		return ""
