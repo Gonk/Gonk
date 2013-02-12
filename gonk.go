@@ -23,7 +23,8 @@ func printUsageAndExit() {
 }
 
 func loadModules(conn *irc.Conn) (modules []IModule) {
-	modules = append(modules, mods.LinkShortener{conn, true})
+	// Load LinkShortener module
+	modules = append(modules, mods.LinkShortener{conn, true, 20})
 
 	// Load each module in the modules directory
 	scripts, err := ioutil.ReadDir("modules")

@@ -16,11 +16,12 @@ var urlRegex = regexp.MustCompile(`(http|https|ftp|ftps)\://[a-zA-Z0-9\-\.]+\.[a
 type LinkShortener struct {
 	Client              *irc.Conn
 	AlwaysShortenImages bool
+	MaxUrlLength        int
 }
 
 func (l LinkShortener) Respond(target string, line string) {
 	// Replace URLs and send result
-	replaces, newText := ShortenUrls(line, l.AlwaysShortenImages)
+	replaces, newText := ShortenUrls(line, l.AlwaysShortenImages, l.MaxUrlLength)
 	if replaces > 0 {
 		l.Client.Privmsg(target, newText)
 	}
@@ -30,18 +31,22 @@ func (l LinkShortener) Hear(target string, line string) {
 	shortenImages := l.AlwaysShortenImages || strings.HasSuffix(line, l.Client.Me.Nick+" link ")
 
 	// Replace URLs and send result
-	replaces, newText := ShortenUrls(line, shortenImages)
+	replaces, newText := ShortenUrls(line, shortenImages, l.MaxUrlLength)
 	if replaces > 0 {
 		l.Client.Privmsg(target, newText)
 	}
 }
 
-func ShortenUrls(text string, shortenImages bool) (int, string) {
+// ShortenUrls shortens URLs in the given text. It only shortens URLs if they
+// are longer than the specified maxLength and not images (unless shortenImages
+// is true).
+func ShortenUrls(text string, shortenImages bool, maxLength int) (int, string) {
 	var replacements []string
 
 	matches := urlRegex.FindAllString(text, -1)
 	for _, match := range matches {
-		if shortenImages || !isImage(match) {
+		// Determine whether to shorten URL
+		if len(match) > maxLength && (shortenImages || !isImage(match)) {
 			uri, err := goisgd.Shorten(match)
 			if err != nil {
 				log.Println("LinkShortener Error:", match, err)

@@ -104,7 +104,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		text := strings.Trim(args[0].(string), `"`)
 
 		// Shorten non-image URLs in the output
-		_, text = mods.ShortenUrls(text, false)
+		_, text = mods.ShortenUrls(text, false, 0)
 		m.Client.Privmsg(target, text)
 
 		return ""
