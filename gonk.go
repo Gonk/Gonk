@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 
+	mods "github.com/cwc/Gonk/modules"
 	"github.com/cwc/go-v8"
 	irc "github.com/fluffle/goirc/client"
 )
@@ -21,7 +22,9 @@ func printUsageAndExit() {
 	os.Exit(1)
 }
 
-func loadModules(conn *irc.Conn) (modules []Module) {
+func loadModules(conn *irc.Conn) (modules []IModule) {
+	modules = append(modules, mods.LinkShortener{conn, true})
+
 	// Load each module in the modules directory
 	scripts, err := ioutil.ReadDir("modules")
 	if err != nil {

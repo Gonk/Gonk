@@ -10,6 +10,17 @@ import (
 	irc "github.com/fluffle/goirc/client"
 )
 
+type IModule interface {
+	// Respond is called when the bot is addressed directly,
+	// either in a channel (meaning that line starts with the
+	// bot's nick) or via PM (meaning that target is equal to
+	// the bot's nick)
+	Respond(target, line string)
+
+	// Hear is called for any message in a channel (never for PMs)
+	Hear(target, line string)
+}
+
 type Module struct {
 	Name    string
 	Client  *irc.Conn
