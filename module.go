@@ -75,7 +75,7 @@ func (m Module) setMatches(regex *regexp.Regexp, line string) int {
 
 	m.Context.Eval(`response.match = ` + string(match))
 
-	return len(match)
+	return len(matches)
 }
 
 func (m Module) Init(script string) (ret interface{}, err error) {
