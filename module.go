@@ -43,7 +43,7 @@ func (m Module) Respond(target string, line string) {
 		if count > 0 {
 			_, err := fn.Call(v8.V8Object{"response"})
 			if err != nil {
-				log.Println(err)
+				log.Printf("%s\n%s", err, fn)
 			}
 		}
 	}
@@ -59,7 +59,7 @@ func (m Module) Hear(target string, line string) {
 		if count > 0 {
 			_, err := fn.Call(v8.V8Object{"response"})
 			if err != nil {
-				log.Println(err)
+				log.Printf("%s\n%s", err, fn)
 			}
 		}
 	}
@@ -120,12 +120,36 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 
 	v8ctx.AddFunc("_httpclient_get", func(args ...interface{}) interface{} {
 		url := strings.Trim(args[0].(string), `"`)
-		resp, err := http.Get(url)
+
+		// Initialize client
+		client := &http.Client{}
+
+		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			log.Println(err)
 			return ""
 		}
 
+		// Set request headers
+		var headers map[string]string
+		err = json.Unmarshal([]byte(args[1].(string)), &headers)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+
+		for header, value := range headers {
+			req.Header.Add(header, value)
+		}
+
+		// Send request
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+
+		// Get response
 		defer resp.Body.Close()
 		bytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -147,12 +171,13 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 	} `)
 
 	v8ctx.Eval(`function HttpClient (url) {
-		this.url = url;
-		this.querystr = "";
+		this._url = url;
+		this._querystr = "";
+		this._headers = {};
 	}`)
 
 	v8ctx.Eval(`HttpClient.prototype.get = function() {
-		body = _httpclient_get(encodeURI(this.url + this.querystr));
+		body = _httpclient_get(encodeURI(this._url + this._querystr), this._headers);
 		return function(cb) {
 			cb(null, null, body);
 		}
@@ -162,10 +187,16 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		prefix = "?";
 
 		for (var prop in q) {
-			this.querystr += prefix;
-			this.querystr += prop + "=" + q[prop];
+			this._querystr += prefix;
+			this._querystr += prop + "=" + q[prop];
 			prefix = "&";
 		}
+
+		return this;
+	}`)
+
+	v8ctx.Eval(`HttpClient.prototype.headers = function(headers) {
+		this._headers = headers;
 
 		return this;
 	}`)
@@ -177,7 +208,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 			_msg_send.apply(null, args); 
 		},
 		"random" : function(items) { return items[Math.floor(Math.random()*items.length)] },
-		"http" : function(url) { return new HttpClient(url) }
+		"http" : function(url) { return new HttpClient(url); }
 	}`)
 
 	v8ctx.Eval(`module = {}`) // Module code is loaded into module.exports
