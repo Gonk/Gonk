@@ -34,8 +34,9 @@ type Module struct {
 }
 
 func (m Module) Respond(target string, line string) {
-	// Store the target
+	// Store the target and message
 	m.setTarget(target)
+	m.setMessage(line)
 
 	// Activate callback on any matches
 	for regex, fn := range m.respondMatchers {
@@ -50,8 +51,9 @@ func (m Module) Respond(target string, line string) {
 }
 
 func (m Module) Hear(target string, line string) {
-	// Store the target
+	// Store the target and message
 	m.setTarget(target)
+	m.setMessage(line)
 
 	// Activate callback on any matches
 	for regex, fn := range m.hearMatchers {
@@ -67,6 +69,10 @@ func (m Module) Hear(target string, line string) {
 
 func (m Module) setTarget(target string) {
 	m.Context.Eval(`response.target = "` + target + `"`)
+}
+
+func (m Module) setMessage(message string) {
+	m.Context.Eval(`response.message = {}; response.message.text = "` + message + `"`)
 }
 
 func (m Module) setMatches(regex *regexp.Regexp, line string) int {
