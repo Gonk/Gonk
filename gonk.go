@@ -26,7 +26,7 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 	v8ctx := v8.NewContext()
 
 	// Load LinkShortener module
-	modules = append(modules, mods.LinkShortener{conn, true, 20})
+	modules = append(modules, mods.LinkShortener{conn, true, 40})
 
 	// Load each module in the modules directory
 	scripts, err := ioutil.ReadDir("modules")
