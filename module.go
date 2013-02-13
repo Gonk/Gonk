@@ -41,7 +41,7 @@ func (m Module) Respond(target string, line string) {
 	for regex, fn := range m.respondMatchers {
 		count := m.setMatches(regex, line)
 		if count > 0 {
-			_, err := fn.Call(`response`)
+			_, err := fn.Call(v8.V8Object{"response"})
 			if err != nil {
 				log.Println(err)
 			}
@@ -57,7 +57,7 @@ func (m Module) Hear(target string, line string) {
 	for regex, fn := range m.hearMatchers {
 		count := m.setMatches(regex, line)
 		if count > 0 {
-			_, err := fn.Call(`response`)
+			_, err := fn.Call(v8.V8Object{"response"})
 			if err != nil {
 				log.Println(err)
 			}
