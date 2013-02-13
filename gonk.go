@@ -56,10 +56,10 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 
 			module := newModule(fileInfo.Name(), conn, v8ctx)
 
-			_, err = module.Init(string(script))
+			ret, err := module.Init(string(script))
 
 			if err != nil {
-				log.Println("Error loading module:", err)
+				log.Printf("Error loading module: %s\n%s", err, ret)
 			}
 
 			log.Printf("Loaded module %s", fileInfo.Name())

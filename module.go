@@ -234,6 +234,8 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 	// Load script
 	ret, err = v8ctx.Eval(script)
 	if err != nil {
+		ret = script
+
 		return
 	}
 
