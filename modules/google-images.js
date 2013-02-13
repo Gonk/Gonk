@@ -12,7 +12,7 @@
     });
     return robot.respond(/(?:mo?u)?sta(?:s|c)he?(?: me)? (.*)/i, function(msg) {
       var imagery, mustachify, type;
-      type = Math.floor(Math.random() * 3);
+      type = Math.floor(Math.random() * 6);
       mustachify = "http://mustachify.me/" + type + "?src=";
       imagery = msg.match[1];
       if (imagery.match(/^https?:\/\//i)) {
