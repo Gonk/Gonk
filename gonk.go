@@ -23,6 +23,8 @@ func printUsageAndExit() {
 }
 
 func loadModules(conn *irc.Conn) (modules []IModule) {
+	v8ctx := v8.NewContext()
+
 	// Load LinkShortener module
 	modules = append(modules, mods.LinkShortener{conn, true, 20})
 
@@ -52,7 +54,6 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 				continue
 			}
 
-			v8ctx := v8.NewContext()
 			module := newModule(fileInfo.Name(), conn, v8ctx)
 
 			_, err = module.Init(string(script))
@@ -78,14 +79,14 @@ func main() {
 	disconnecting := make(chan bool)
 
 	/*/ Set up ^C handler
-		interrupt := make(chan os.Signal, 1)
-		signal.Notify(interrupt, os.Interrupt)
-		go func() {
-			// Quit on ^C
-			<-interrupt
-			quitting <- true
-		}()
-	    //*/
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+	go func() {
+		// Quit on ^C
+		<-interrupt
+		quitting <- true
+	}()
+	//*/
 
 	// Parse flags
 	server := flag.String("server", "", "Hostname and/or port (e.g. 'localhost:6667')")

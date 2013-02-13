@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -39,7 +41,10 @@ func (m Module) Respond(target string, line string) {
 	for regex, fn := range m.respondMatchers {
 		count := m.setMatches(regex, line)
 		if count > 0 {
-			fn.Call(`response`)
+			_, err := fn.Call(`response`)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
 }
@@ -52,7 +57,10 @@ func (m Module) Hear(target string, line string) {
 	for regex, fn := range m.hearMatchers {
 		count := m.setMatches(regex, line)
 		if count > 0 {
-			fn.Call(`response`)
+			_, err := fn.Call(`response`)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
 }
@@ -110,29 +118,77 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		return ""
 	})
 
+	v8ctx.AddFunc("_httpclient_get", func(args ...interface{}) interface{} {
+		url := strings.Trim(args[0].(string), `"`)
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+
+		defer resp.Body.Close()
+		bytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+
+		return string(bytes)
+	})
+
 	// Set up objects
 	v8ctx.Eval(`console = {
-                "log": function() { return _console_log.apply(null, arguments); }
-    }`)
+		"log": function() { return _console_log.apply(null, arguments); }
+	}`)
 
 	v8ctx.Eval(`gonk = {
-                "respond": function() { return _robot_respond.apply(null, arguments); },
-                "hear" : function() { return _robot_hear.apply(null, arguments); }
-    } `)
+		"respond": function() { return _robot_respond.apply(null, arguments); },
+		"hear" : function() { return _robot_hear.apply(null, arguments); }
+	} `)
+
+	v8ctx.Eval(`function HttpClient (url) {
+		this.url = url;
+		this.querystr = "";
+	}`)
+
+	v8ctx.Eval(`HttpClient.prototype.get = function() {
+		body = _httpclient_get(encodeURI(this.url + this.querystr));
+		return function(cb) {
+			cb(null, null, body);
+		}
+	}`)
+
+	v8ctx.Eval(`HttpClient.prototype.query = function(q) {
+		prefix = "?";
+
+		for (var prop in q) {
+			this.querystr += prefix;
+			this.querystr += prop + "=" + q[prop];
+			prefix = "&";
+		}
+
+		return this;
+	}`)
 
 	v8ctx.Eval(`response = {
-                "send" : function() {
-                    var args = [].slice.call(arguments);
-                    args.push(response.target);
-                    _msg_send.apply(null, args); 
-                }
-    }`)
+		"send" : function() {
+			var args = [].slice.call(arguments);
+			args.push(response.target);
+			_msg_send.apply(null, args); 
+		},
+		"random" : function(items) { return items[Math.floor(Math.random()*items.length)] },
+		"http" : function(url) { return new HttpClient(url) }
+	}`)
 
 	v8ctx.Eval(`module = {}`) // Module code is loaded into module.exports
 
 	// Load script
 	ret, err = v8ctx.Eval(script)
-	v8ctx.Eval(`module.exports(gonk)`)
+	if err != nil {
+		return
+	}
+
+	ret, err = v8ctx.Eval(`module.exports(gonk)`)
 
 	return
 }
