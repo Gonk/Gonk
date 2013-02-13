@@ -117,12 +117,12 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		argc := len(args)
 
 		// Last argument is expected to be the message target
-		target := strings.Trim(args[argc - 1].(string), `"`)
+		target := strings.Trim(args[argc-1].(string), `"`)
 
-		for _, arg := range args[:argc - 1] {
+		for _, arg := range args[:argc-1] {
 			text := strings.Trim(arg.(string), `"`)
 
-			// Shorten non-image URLs in the output
+			// Shorten non-embeddable URLs in the output
 			_, text = mods.ShortenUrls(text, false, 0)
 			m.Client.Privmsg(target, text)
 		}
