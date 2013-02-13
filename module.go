@@ -108,12 +108,18 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 	})
 
 	v8ctx.AddFunc("_msg_send", func(args ...interface{}) interface{} {
-		target := strings.Trim(args[1].(string), `"`)
-		text := strings.Trim(args[0].(string), `"`)
+		argc := len(args)
 
-		// Shorten non-image URLs in the output
-		_, text = mods.ShortenUrls(text, false, 0)
-		m.Client.Privmsg(target, text)
+		// Last argument is expected to be the message target
+		target := strings.Trim(args[argc - 1].(string), `"`)
+
+		for _, arg := range args[:argc - 1] {
+			text := strings.Trim(arg.(string), `"`)
+
+			// Shorten non-image URLs in the output
+			_, text = mods.ShortenUrls(text, false, 0)
+			m.Client.Privmsg(target, text)
+		}
 
 		return ""
 	})
