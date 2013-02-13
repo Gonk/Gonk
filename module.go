@@ -213,6 +213,12 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		return this;
 	}`)
 
+	v8ctx.Eval(`HttpClient.prototype.header = function() {
+		this._headers[arguments[0]] = arguments[1];
+
+		return this;
+	}`)
+
 	v8ctx.Eval(`response = {
 		"send" : function() {
 			var args = [].slice.call(arguments);
