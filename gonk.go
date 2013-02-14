@@ -146,9 +146,9 @@ func main() {
 			for _, module := range modules {
 				if target == line.Nick || strings.HasPrefix(text, conn.Me.Nick) {
 					// Received a PM or addressed directly in a channel
-					module.Respond(target, text)
+					module.Respond(target, text, line.Nick)
 				} else {
-					module.Hear(target, text)
+					module.Hear(target, text, line.Nick)
 				}
 			}
 		}()

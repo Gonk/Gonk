@@ -18,10 +18,10 @@ type IModule interface {
 	// either in a channel (meaning that line starts with the
 	// bot's nick) or via PM (meaning that target is equal to
 	// the bot's nick)
-	Respond(target, line string)
+	Respond(target, line string, from string)
 
 	// Hear is called for any message in a channel (never for PMs)
-	Hear(target, line string)
+	Hear(target, line string, from string)
 }
 
 type Module struct {
@@ -33,10 +33,10 @@ type Module struct {
 	hearMatchers    map[*regexp.Regexp]v8.V8Function
 }
 
-func (m Module) Respond(target string, line string) {
+func (m Module) Respond(target string, line string, from string) {
 	// Store the target and message
 	m.setTarget(target)
-	m.setMessage(line)
+	m.setMessage(line, from)
 
 	// Activate callback on any matches
 	for regex, fn := range m.respondMatchers {
@@ -50,10 +50,10 @@ func (m Module) Respond(target string, line string) {
 	}
 }
 
-func (m Module) Hear(target string, line string) {
+func (m Module) Hear(target string, line string, from string) {
 	// Store the target and message
 	m.setTarget(target)
-	m.setMessage(line)
+	m.setMessage(line, from)
 
 	// Activate callback on any matches
 	for regex, fn := range m.hearMatchers {
@@ -71,8 +71,8 @@ func (m Module) setTarget(target string) {
 	m.Context.Eval(`response.target = "` + target + `"`)
 }
 
-func (m Module) setMessage(message string) {
-	m.Context.Eval(`response.message = {}; response.message.text = "` + message + `"`)
+func (m Module) setMessage(message string, from string) {
+	m.Context.Eval(`response.nick = "` + m.Client.Me.Nick + `"; response.message = {}; response.message.nick = "` + from + `"; response.message.text = "` + message + `"`)
 }
 
 func (m Module) setMatches(regex *regexp.Regexp, line string) int {
@@ -179,7 +179,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 
 	v8ctx.Eval(`gonk = {
 		"respond": function() { return _robot_respond.apply(null, arguments); },
-		"hear" : function() { return _robot_hear.apply(null, arguments); }
+		"hear" : function() { return _robot_hear.apply(null, arguments); },
 	} `)
 
 	v8ctx.Eval(`function HttpClient (url) {

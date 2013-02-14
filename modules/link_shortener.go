@@ -19,7 +19,7 @@ type LinkShortener struct {
 	MaxUrlLength        int
 }
 
-func (l LinkShortener) Respond(target string, line string) {
+func (l LinkShortener) Respond(target string, line string, from string) {
 	// Replace URLs and send result
 	replaces, newText := ShortenUrls(line, l.AlwaysShortenEmbeds, l.MaxUrlLength)
 	if replaces > 0 {
@@ -27,7 +27,7 @@ func (l LinkShortener) Respond(target string, line string) {
 	}
 }
 
-func (l LinkShortener) Hear(target string, line string) {
+func (l LinkShortener) Hear(target string, line string, from string) {
 	shortenEmbeds := l.AlwaysShortenEmbeds || strings.HasSuffix(line, l.Client.Me.Nick+" link ")
 
 	// Replace URLs and send result
