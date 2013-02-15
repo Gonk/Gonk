@@ -18,10 +18,12 @@ type IModule interface {
 	// either in a channel (meaning that line starts with the
 	// bot's nick) or via PM (meaning that target is equal to
 	// the bot's nick)
-	Respond(target, line string, from string)
+	// Returns true if the module sent a response.
+	Respond(target, line string, from string) bool
 
 	// Hear is called for any message in a channel (never for PMs)
-	Hear(target, line string, from string)
+	// Returns true if the module sent a response.
+	Hear(target, line string, from string) bool
 }
 
 type Module struct {
@@ -33,7 +35,7 @@ type Module struct {
 	hearMatchers    map[*regexp.Regexp]v8.V8Function
 }
 
-func (m Module) Respond(target string, line string, from string) {
+func (m Module) Respond(target string, line string, from string) (responded bool) {
 	// Store the target and message
 	m.setTarget(target)
 	m.setMessage(line, from)
@@ -42,15 +44,19 @@ func (m Module) Respond(target string, line string, from string) {
 	for regex, fn := range m.respondMatchers {
 		count := m.setMatches(regex, line)
 		if count > 0 {
+			responded = true
+
 			_, err := fn.Call(v8.V8Object{"response"})
 			if err != nil {
 				log.Printf("%s\n%s", err, fn)
 			}
 		}
 	}
+
+	return
 }
 
-func (m Module) Hear(target string, line string, from string) {
+func (m Module) Hear(target string, line string, from string) (responded bool) {
 	// Store the target and message
 	m.setTarget(target)
 	m.setMessage(line, from)
@@ -59,12 +65,16 @@ func (m Module) Hear(target string, line string, from string) {
 	for regex, fn := range m.hearMatchers {
 		count := m.setMatches(regex, line)
 		if count > 0 {
+			responded = true
+
 			_, err := fn.Call(v8.V8Object{"response"})
 			if err != nil {
 				log.Printf("%s\n%s", err, fn)
 			}
 		}
 	}
+
+	return
 }
 
 func (m Module) setTarget(target string) {

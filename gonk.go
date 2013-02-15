@@ -25,9 +25,6 @@ func printUsageAndExit() {
 func loadModules(conn *irc.Conn) (modules []IModule) {
 	v8ctx := v8.NewContext()
 
-	// Load LinkShortener module
-	modules = append(modules, mods.LinkShortener{conn, true, 40})
-
 	// Load each module in the modules directory
 	scripts, err := ioutil.ReadDir("modules")
 	if err != nil {
@@ -66,6 +63,9 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 			modules = append(modules, module)
 		}
 	}
+
+	// Load LinkShortener module
+	modules = append(modules, mods.LinkShortener{conn, true, 40})
 
 	return
 }
@@ -146,9 +146,13 @@ func main() {
 			for _, module := range modules {
 				if target == line.Nick || strings.HasPrefix(text, conn.Me.Nick) {
 					// Received a PM or addressed directly in a channel
-					module.Respond(target, text, line.Nick)
+					if module.Respond(target, text, line.Nick) {
+						break;
+					}
 				} else {
-					module.Hear(target, text, line.Nick)
+					if module.Hear(target, text, line.Nick) {
+						break;
+					}
 				}
 			}
 		}()

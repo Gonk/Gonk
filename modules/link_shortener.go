@@ -19,22 +19,30 @@ type LinkShortener struct {
 	MaxUrlLength        int
 }
 
-func (l LinkShortener) Respond(target string, line string, from string) {
+func (l LinkShortener) Respond(target string, line string, from string) (responded bool) {
 	// Replace URLs and send result
 	replaces, newText := ShortenUrls(line, l.AlwaysShortenEmbeds, l.MaxUrlLength)
 	if replaces > 0 {
+		responded = true
+
 		l.Client.Privmsg(target, newText)
 	}
+
+	return
 }
 
-func (l LinkShortener) Hear(target string, line string, from string) {
+func (l LinkShortener) Hear(target string, line string, from string) (responded bool) {
 	shortenEmbeds := l.AlwaysShortenEmbeds || strings.HasSuffix(line, l.Client.Me.Nick+" link ")
 
 	// Replace URLs and send result
 	replaces, newText := ShortenUrls(line, shortenEmbeds, l.MaxUrlLength)
 	if replaces > 0 {
+		responded = true
+
 		l.Client.Privmsg(target, newText)
 	}
+
+	return
 }
 
 // ShortenUrls shortens URLs in the given text. It only shortens URLs if they
