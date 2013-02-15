@@ -132,8 +132,9 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		for _, arg := range args[:argc-1] {
 			text := strings.Trim(arg.(string), `"`)
 
-			// Shorten non-embeddable URLs in the output
-			_, text = mods.ShortenUrls(text, false, 0)
+			// Shorten URLs in the response
+			_, text = mods.ShortenUrls(text, false, true, 25)
+
 			m.Client.Privmsg(target, text)
 		}
 

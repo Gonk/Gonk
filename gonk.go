@@ -65,7 +65,7 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 	}
 
 	// Load LinkShortener module
-	modules = append(modules, mods.LinkShortener{conn, true, 40})
+	modules = append(modules, mods.LinkShortener{conn, false, 40})
 
 	return
 }
@@ -147,11 +147,11 @@ func main() {
 				if target == line.Nick || strings.HasPrefix(text, conn.Me.Nick) {
 					// Received a PM or addressed directly in a channel
 					if module.Respond(target, text, line.Nick) {
-						break;
+						break
 					}
 				} else {
 					if module.Hear(target, text, line.Nick) {
-						break;
+						break
 					}
 				}
 			}
