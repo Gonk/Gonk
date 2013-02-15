@@ -99,7 +99,7 @@
           language = languages[parsed[2]];
           parsed = parsed[0] && parsed[0][0] && parsed[0][0][0];
           if (parsed) {
-            if (msg.match[2] === void 0) {
+            if (!msg.match[2]) {
               return msg.send("" + term + " is " + language + " for " + parsed);
             } else {
               return msg.send("The " + language + " " + term + " translates as " + parsed + " in " + languages[target]);
