@@ -1,7 +1,7 @@
 (function() {
 
   module.exports = function(robot) {
-    return robot.respond(/(calc|calculate|convert|math)( me)? (.*)/i, function(msg) {
+    return robot.respond(/(calc|calculate|convert|math|compute)( me)? (.*)/i, function(msg) {
       return msg.http('https://www.google.com/ig/calculator').query({
         hl: 'en',
         q: msg.match[3]
