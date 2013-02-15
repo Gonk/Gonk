@@ -35,7 +35,7 @@ func (l LinkShortener) Respond(target string, line string, from string) (respond
 
 func (l LinkShortener) Hear(target string, line string, from string) (responded bool) {
 	// Replace URLs and send result
-	replaces, newText := ShortenUrls(line, l.AlwaysShortenEmbeds, true, l.MaxUrlLength)
+	replaces, newText := ShortenUrls(line, l.AlwaysShortenEmbeds, false, l.MaxUrlLength)
 	if replaces > 0 {
 		responded = true
 
@@ -48,7 +48,8 @@ func (l LinkShortener) Hear(target string, line string, from string) (responded 
 // ShortenUrls shortens URLs in the given text. By default, it only shortens
 // URLs if they are longer than the specified maxLength and not embeddable.
 // Supplying a true value to shortenEmbeds or shortenImages will change that
-// behavior.
+// behavior. In addition, if shortenImages is true, the shortened URL will
+// have '#.png' appended, in order to enable clients to embed the image.
 // Returns a count of shortened URLs and the (potentially) modified text.
 func ShortenUrls(text string, shortenEmbeds bool, shortenImages bool, maxLength int) (int, string) {
 	var replacements []string
@@ -64,7 +65,7 @@ func ShortenUrls(text string, shortenEmbeds bool, shortenImages bool, maxLength 
 			}
 
 			// Enable shortened image URLs to be embedded by capable clients
-			if IsImage(match) {
+			if shortenImages && IsImage(match) {
 				uri += "#.png"
 			}
 

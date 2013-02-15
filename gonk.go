@@ -65,7 +65,7 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 	}
 
 	// Load LinkShortener module
-	modules = append(modules, mods.LinkShortener{conn, false, 40})
+	modules = append(modules, mods.LinkShortener{conn, true, 40})
 
 	return
 }
