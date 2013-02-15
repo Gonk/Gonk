@@ -200,7 +200,8 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 	}`)
 
 	v8ctx.Eval(`HttpClient.prototype.get = function() {
-		body = _httpclient_get(encodeURI(this._url + this._querystr), this._headers);
+		uri = encodeURI(this._url) + this._querystr;
+		body = _httpclient_get(uri, this._headers);
 		return function(cb) {
 			cb(null, null, body);
 		}
@@ -211,7 +212,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 
 		for (var prop in q) {
 			this._querystr += prefix;
-			this._querystr += prop + "=" + q[prop];
+			this._querystr += prop + "=" + encodeURIComponent(q[prop]);
 			prefix = "&";
 		}
 
