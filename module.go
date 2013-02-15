@@ -229,6 +229,18 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		"http" : function(url) { return new HttpClient(url); }
 	}`)
 
+	v8ctx.Eval(`if (!String.prototype.format) {
+		String.prototype.format = function() {
+			var args = arguments;
+			return this.replace(/{(\d+)}/g, function(match, number) {
+				return typeof args[number] != 'undefined'
+				? args[number]
+				: match
+				;
+			});
+		};
+	}`)
+
 	v8ctx.Eval(`module = {}`) // Module code is loaded into module.exports
 
 	// Load script
