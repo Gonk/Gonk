@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -141,6 +142,48 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		return ""
 	})
 
+	v8ctx.AddFunc("_httpclient_post", func(args ...interface{}) interface{} {
+		url := strings.Trim(args[0].(string), `"`)
+
+		// Initialize client
+		client := &http.Client{}
+
+		req, err := http.NewRequest("POST", url, bytes.NewBufferString(strings.Trim(args[2].(string), `"`)[1:]))
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+
+		// Set request headers
+		var headers map[string]string
+		err = json.Unmarshal([]byte(args[1].(string)), &headers)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+
+		for header, value := range headers {
+			req.Header.Add(header, value)
+		}
+
+		// Send request
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+
+		// Get response
+		defer resp.Body.Close()
+		bytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+
+		return string(bytes)
+	})
+
 	v8ctx.AddFunc("_httpclient_get", func(args ...interface{}) interface{} {
 		url := strings.Trim(args[0].(string), `"`)
 
@@ -197,6 +240,14 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		this._url = url;
 		this._querystr = "";
 		this._headers = {};
+	}`)
+
+	v8ctx.Eval(`HttpClient.prototype.post = function() {
+		uri = encodeURI(this._url);
+		body = _httpclient_post(uri, this._headers, this._querystr);
+		return function(cb) {
+			cb(null, null, body);
+		}
 	}`)
 
 	v8ctx.Eval(`HttpClient.prototype.get = function() {
