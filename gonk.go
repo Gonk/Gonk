@@ -129,6 +129,7 @@ func main() {
 	})
 
 	c.HandleFunc(irc.DISCONNECTED, func(conn *irc.Conn, line *irc.Line) {
+		log.Println("Disconnected from server; shutting down")
 		disconnecting <- true
 	})
 
