@@ -163,6 +163,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	log.Println(c.String())
+
 	defer func() {
 		//<-quitting
 
