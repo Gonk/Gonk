@@ -20,7 +20,7 @@ type LinkShortener struct {
 }
 
 func (l LinkShortener) Respond(target string, line string, from string) (responded bool) {
-	shortenEmbeds := l.AlwaysShortenEmbeds || strings.HasPrefix(line, l.Client.Me.Nick+" link ")
+	shortenEmbeds := l.AlwaysShortenEmbeds || strings.HasPrefix(line, l.Client.Me().Nick+" link ")
 
 	// Replace URLs and send result
 	replaces, newText := ShortenUrls(line, shortenEmbeds, true, l.MaxUrlLength)

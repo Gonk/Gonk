@@ -83,7 +83,7 @@ func (m Module) setTarget(target string) {
 }
 
 func (m Module) setMessage(message string, from string) {
-	m.Context.Eval(`response.nick = "` + m.Client.Me.Nick + `"; response.message = {}; response.message.nick = "` + from + `"; response.message.text = "` + message + `"`)
+	m.Context.Eval(`response.nick = "` + m.Client.Me().Nick + `"; response.message = {}; response.message.nick = "` + from + `"; response.message.text = "` + message + `"`)
 }
 
 func (m Module) setMatches(regex *regexp.Regexp, line string) int {

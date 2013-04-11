@@ -106,17 +106,17 @@ func main() {
 	c := irc.SimpleClient(*gonkNick)
 
 	if *ssl {
-		c.SSL = true
+		c.Config().SSL = true
 	}
 
 	if !*verifyCert {
-		c.SSLConfig = &tls.Config{InsecureSkipVerify: true}
+		c.Config().SSLConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
 	// Load modules and connect them to the IRC client
 	modules := loadModules(c)
 
-	c.AddHandler("connected", func(conn *irc.Conn, line *irc.Line) {
+	c.HandleFunc(irc.CONNECTED, func(conn *irc.Conn, line *irc.Line) {
 		// Join all specified channels upon connecting
 		for i := 0; i < len(flag.Args()); i++ {
 			channel := fmt.Sprintf("#%s", flag.Arg(i))
@@ -128,14 +128,14 @@ func main() {
 		}
 	})
 
-	c.AddHandler("disconnected", func(conn *irc.Conn, line *irc.Line) {
+	c.HandleFunc(irc.DISCONNECTED, func(conn *irc.Conn, line *irc.Line) {
 		disconnecting <- true
 	})
 
-	c.AddHandler("privmsg", func(conn *irc.Conn, line *irc.Line) {
+	c.HandleFunc("privmsg", func(conn *irc.Conn, line *irc.Line) {
 		// Determine reply target
 		target := line.Args[0]
-		if target == conn.Me.Nick {
+		if target == conn.Me().Nick {
 			// Reply via PM
 			target = line.Nick
 		}
@@ -144,7 +144,7 @@ func main() {
 
 		go func() {
 			for _, module := range modules {
-				if target == line.Nick || strings.HasPrefix(text, conn.Me.Nick) {
+				if target == line.Nick || strings.HasPrefix(text, conn.Me().Nick) {
 					// Received a PM or addressed directly in a channel
 					if module.Respond(target, text, line.Nick) {
 						break
@@ -158,7 +158,7 @@ func main() {
 		}()
 	})
 
-	err := c.Connect(*server, *password)
+	err := c.ConnectTo(*server, *password)
 	if err != nil {
 		log.Fatal(err)
 	}
