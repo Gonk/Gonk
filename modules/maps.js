@@ -1,7 +1,7 @@
 (function() {
 
   module.exports = function(robot) {
-    return robot.respond(/(?:(satellite|terrain|hybrid)[- ])?map me (.+)/i, function(msg) {
+    return robot.respond(/(?:(satellite|terrain|hybrid)[- ])?map( me)? (.+)/i, function(msg) {
       var location, mapType, mapUrl, url;
       mapType = msg.match[1] || "roadmap";
       location = msg.match[2];
