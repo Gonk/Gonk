@@ -21,18 +21,18 @@ On startup, Gonk will search the `modules` directory and attempt to load any fil
 
 ## How to Build
 
-Gonk embeds the [Google V8](https://code.google.com/p/v8/) engine and binds to it with [go-v8](http://github.com/mattn/go-v8). This complicates the build process a bit. These instructions assume that a proper compiler toolchain and the V8 library and header files exist on your system in the standard location and that you understand building with Makefiles and the Go workflow (e.g. how to use `GOPATH`).
+Gonk embeds the [Google V8](https://code.google.com/p/v8/) engine and binds to it with [go-v8](http://github.com/Gonk/go-v8). This complicates the build process a bit. These instructions assume that a proper compiler toolchain and the V8 library and header files exist on your system in the standard location and that you understand building with Makefiles and the Go workflow (e.g. how to use `GOPATH`).
 
 First, Gonk and its dependencies need to be installed into your `GOPATH`:
 
 ```
-$ go get github.com/cwc/Gonk
+$ go get github.com/Gonk/Gonk
 ```
 
 *This command will appear to fail for go-v8.* This is because go-v8 requires an additional build step:
 
 ```
-$ cd $GOPATH/src/github.com/mattn/go-v8
+$ cd $GOPATH/src/github.com/Gonk/go-v8
 $ make
 ```
 
@@ -48,6 +48,6 @@ $ export LD_LIBRARY_PATH=$LIBRARY_PATH
 Now, you should be able to finish building and run Gonk:
 
 ```
-$ go get github.com/cwc/Gonk
+$ go get github.com/Gonk/Gonk
 $ $GOPATH/bin/Gonk
 ```
