@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/NickPresta/GoURLShortener"
-	irc "github.com/fluffle/goirc/client"
+	irc "github.com/Gonk/goirc/client"
 )
 
 var urlRegex = regexp.MustCompile(`(http|https|ftp|ftps)\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,4}(/\S*)?`)

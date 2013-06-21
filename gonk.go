@@ -11,8 +11,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cwc/go-v8"
-	irc "github.com/fluffle/goirc/client"
+	"github.com/Gonk/go-v8"
+	irc "github.com/Gonk/goirc/client"
 )
 
 func printUsageAndExit() {

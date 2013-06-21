@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"strings"
 
-	mods "github.com/cwc/Gonk/modules"
-	"github.com/cwc/go-v8"
-	irc "github.com/fluffle/goirc/client"
+	mods "github.com/Gonk/Gonk/modules"
+	"github.com/Gonk/go-v8"
+	irc "github.com/Gonk/goirc/client"
 )
 
 type IModule interface {
