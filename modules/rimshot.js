@@ -4,7 +4,7 @@
       return msg.send("http://instantrimshot.com/index.php?sound=rimshot&play=true");
     });
 
-    robot.respond(/(csi|caruso)?/i, function(msg) {
+    robot.respond(/(csi|caruso)+/i, function(msg) {
       return msg.send("http://instantrimshot.com/index.php?sound=csi&play=true");
     });
 
