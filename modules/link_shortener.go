@@ -1,7 +1,7 @@
 package modules
 
 import (
-	"log"
+	log "github.com/fluffle/golog/logging"
 	"regexp"
 	"strings"
 
@@ -60,7 +60,7 @@ func ShortenUrls(text string, shortenEmbeds bool, shortenImages bool, maxLength 
 		if len(match) > maxLength && (shortenEmbeds || !IsEmbeddable(match) || (IsImage(match) && shortenImages)) {
 			uri, err := goisgd.Shorten(match)
 			if err != nil {
-				log.Println("LinkShortener Error:", match, err)
+				log.Error("LinkShortener Error:", match, err)
 				continue
 			}
 

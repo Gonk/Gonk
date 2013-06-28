@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"log"
+	log "github.com/fluffle/golog/logging"
 	"net/http"
 	"regexp"
 	"strings"
@@ -49,7 +49,7 @@ func (m Module) Respond(target string, line string, from string) (responded bool
 
 			_, err := fn.Call(v8.V8Object{"response"})
 			if err != nil {
-				log.Printf("%s\n%s", err, fn)
+				log.Error("%s\n%s", err, fn)
 			}
 		}
 	}
@@ -70,7 +70,7 @@ func (m Module) Hear(target string, line string, from string) (responded bool) {
 
 			_, err := fn.Call(v8.V8Object{"response"})
 			if err != nil {
-				log.Printf("%s\n%s", err, fn)
+				log.Error("%s\n%s", err, fn)
 			}
 		}
 	}
@@ -100,7 +100,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 
 	v8ctx.AddFunc("_console_log", func(args ...interface{}) interface{} {
 		for _, arg := range args {
-			log.Printf("> %s", arg)
+			log.Warn("> %s", arg)
 		}
 
 		return ""
@@ -150,7 +150,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 
 		req, err := http.NewRequest("POST", url, bytes.NewBufferString(strings.Trim(args[2].(string), `"`)[1:]))
 		if err != nil {
-			log.Println(err)
+			log.Error(err.Error())
 			return ""
 		}
 
@@ -158,7 +158,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		var headers map[string]string
 		err = json.Unmarshal([]byte(args[1].(string)), &headers)
 		if err != nil {
-			log.Println(err)
+			log.Error(err.Error())
 			return ""
 		}
 
@@ -169,7 +169,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		// Send request
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Println(err)
+			log.Error(err.Error())
 			return ""
 		}
 
@@ -177,7 +177,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		defer resp.Body.Close()
 		bytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Println(err)
+			log.Error(err.Error())
 			return ""
 		}
 
@@ -192,7 +192,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			log.Println(err)
+			log.Error(err.Error())
 			return ""
 		}
 
@@ -200,7 +200,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		var headers map[string]string
 		err = json.Unmarshal([]byte(args[1].(string)), &headers)
 		if err != nil {
-			log.Println(err)
+			log.Error(err.Error())
 			return ""
 		}
 
@@ -211,7 +211,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		// Send request
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Println(err)
+			log.Error(err.Error())
 			return ""
 		}
 
@@ -219,7 +219,7 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 		defer resp.Body.Close()
 		bytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Println(err)
+			log.Error(err.Error())
 			return ""
 		}
 

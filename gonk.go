@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"log"
+	log "github.com/fluffle/golog/logging"
 	"os"
 	//"os/signal"
 	"io/ioutil"
@@ -27,7 +27,7 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 	// Load each module in the modules directory
 	scripts, err := ioutil.ReadDir("modules")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err.Error())
 	}
 
 	for _, fileInfo := range scripts {
@@ -38,7 +38,7 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 
 			file, err := os.Open("modules/" + fileInfo.Name())
 			if err != nil {
-				log.Println("Error loading module:", err)
+				log.Error("Error loading module:", err)
 				continue
 			}
 
@@ -46,7 +46,7 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 
 			script, err := ioutil.ReadAll(file)
 			if err != nil {
-				log.Println("Error loading module:", err)
+				log.Error("Error loading module:", err)
 				continue
 			}
 
@@ -55,10 +55,10 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 			ret, err := module.Init(string(script))
 
 			if err != nil {
-				log.Printf("Error loading module: %s\n%s", err, ret)
+				log.Error("Error loading module: %s\n%s", err, ret)
 			}
 
-			log.Printf("Loaded module %s", fileInfo.Name())
+			log.Info("Loaded module %s", fileInfo.Name())
 			modules = append(modules, module)
 		}
 	}
@@ -117,7 +117,7 @@ func main() {
 		for i := 0; i < len(flag.Args()); i++ {
 			channel := fmt.Sprintf("#%s", flag.Arg(i))
 
-			log.Printf("Joining %s", channel)
+			log.Info("Joining %s", channel)
 
 			conn.Join(channel)
 			conn.Privmsg(channel, "*GONK*")
@@ -125,7 +125,7 @@ func main() {
 	})
 
 	c.HandleFunc(irc.DISCONNECTED, func(conn *irc.Conn, line *irc.Line) {
-		log.Println("Disconnected from server; shutting down")
+		log.Info("Disconnected from server; shutting down")
 		disconnecting <- true
 	})
 
@@ -157,10 +157,10 @@ func main() {
 
 	err := c.ConnectTo(*server, *password)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err.Error())
 	}
 
-	log.Println(c.String())
+	log.Info(c.String())
 
 	defer func() {
 		//<-quitting
