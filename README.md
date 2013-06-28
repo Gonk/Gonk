@@ -38,16 +38,7 @@ $ cd $GOPATH/src/github.com/Gonk/go-v8
 $ make
 ```
 
-This will build a V8 wrapper library for your system in go-v8's directory. You may install this library in a standard location on your system, or leave it here.
-
-*Important:* if you're not installing the wrapper to your system's library directory, you'll need to declare a couple of environment variables to make sure Go can find it for the build process:
-
-```
-$ export LIBRARY_PATH=$GOPATH/src/github.com/Gonk/go-v8
-$ export LD_LIBRARY_PATH=$LIBRARY_PATH
-```
-
-Now, you should be able to finish building and run Gonk:
+This will build a V8 wrapper library and install it in your `GOPATH`. You should now be able to finish building and run Gonk:
 
 ```
 $ go get github.com/Gonk/Gonk
