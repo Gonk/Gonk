@@ -58,7 +58,7 @@ HttpClient.prototype.header = function() {
 response = {
 	"send" : function() {
 		var args = [].slice.call(arguments);
-		args.push(response.target);
+		args.push(this.target);
 		_msg_send.apply(null, args); 
 	},
 	"random" : function(items) { return items[Math.floor(Math.random()*items.length)] },
@@ -75,6 +75,17 @@ if (!String.prototype.format) {
 			;
 		});
 	};
+}
+
+function clone(obj){
+  if(obj == null || typeof(obj) != 'object')
+    return obj;
+
+  var temp = obj.constructor(); // changed
+
+  for(var key in obj)
+    temp[key] = clone(obj[key]);
+  return temp;
 }
 
 module = {}; // Module code is loaded into module.exports

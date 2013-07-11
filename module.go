@@ -3,15 +3,15 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	mods "github.com/Gonk/Gonk/modules"
+	"github.com/Gonk/go-v8"
+	irc "github.com/Gonk/goirc/client"
 	log "github.com/fluffle/golog/logging"
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
-
-	mods "github.com/Gonk/Gonk/modules"
-	"github.com/Gonk/go-v8"
-	irc "github.com/Gonk/goirc/client"
 )
 
 type IModule interface {
@@ -34,65 +34,52 @@ type Module struct {
 
 	respondMatchers map[*regexp.Regexp]v8.V8Function
 	hearMatchers    map[*regexp.Regexp]v8.V8Function
+	response        int
+}
+
+func (m *Module) checkMatchers(regexes map[*regexp.Regexp]v8.V8Function, target string, line string, from string) (responded bool) {
+	// Activate callback on any matches
+	for regex, fn := range regexes {
+		matches := regex.FindStringSubmatch(line)
+		match, _ := json.Marshal(matches)
+
+		if len(matches) > 0 {
+			responded = true
+
+			go func(match string, fn v8.V8Function) {
+				// Clone a response object
+				m.response++
+				m.Context.Eval(`var response` + strconv.Itoa(m.response) + ` = clone(response);`)
+
+				// Set response parameters
+				m.Context.Eval(`response` + strconv.Itoa(m.response) + `.match = ` + match)
+				m.Context.Eval(`response` + strconv.Itoa(m.response) + `.target = "` + target + `";`)
+				m.Context.Eval(`response` + strconv.Itoa(m.response) + `.nick = "` + m.Client.Me().Nick + `"; 
+								response` + strconv.Itoa(m.response) + `.message = {}; 
+								response` + strconv.Itoa(m.response) + `.message.nick = "` + from + `"; 
+								response` + strconv.Itoa(m.response) + `.message.text = "` + line + `"`)
+
+				_, err := fn.Call(v8.V8Object{`response` + strconv.Itoa(m.response)})
+				if err != nil {
+					log.Error("%s\n%s", err, fn)
+				}
+			}(string(match), fn)
+		}
+	}
+
+	return
 }
 
 func (m *Module) Respond(target string, line string, from string) (responded bool) {
-	// Store the target and message
-	m.setTarget(target)
-	m.setMessage(line, from)
-
-	// Activate callback on any matches
-	for regex, fn := range m.respondMatchers {
-		count := m.setMatches(regex, line)
-		if count > 0 {
-			responded = true
-
-			_, err := fn.Call(v8.V8Object{"response"})
-			if err != nil {
-				log.Error("%s\n%s", err, fn)
-			}
-		}
-	}
+	responded = m.checkMatchers(m.respondMatchers, target, line, from)
 
 	return
 }
 
 func (m *Module) Hear(target string, line string, from string) (responded bool) {
-	// Store the target and message
-	m.setTarget(target)
-	m.setMessage(line, from)
-
-	// Activate callback on any matches
-	for regex, fn := range m.hearMatchers {
-		count := m.setMatches(regex, line)
-		if count > 0 {
-			responded = true
-
-			_, err := fn.Call(v8.V8Object{"response"})
-			if err != nil {
-				log.Error("%s\n%s", err, fn)
-			}
-		}
-	}
+	responded = m.checkMatchers(m.hearMatchers, target, line, from)
 
 	return
-}
-
-func (m *Module) setTarget(target string) {
-	m.Context.Eval(`response.target = "` + target + `"`)
-}
-
-func (m *Module) setMessage(message string, from string) {
-	m.Context.Eval(`response.nick = "` + m.Client.Me().Nick + `"; response.message = {}; response.message.nick = "` + from + `"; response.message.text = "` + message + `"`)
-}
-
-func (m *Module) setMatches(regex *regexp.Regexp, line string) int {
-	matches := regex.FindStringSubmatch(line)
-	match, _ := json.Marshal(matches)
-
-	m.Context.Eval(`response.match = ` + string(match))
-
-	return len(matches)
 }
 
 func _console_log(args ...interface{}) interface{} {
@@ -251,5 +238,5 @@ func (m *Module) Init(v8ctx *v8.V8Context, script string) (ret interface{}, err 
 }
 
 func NewModule(name string, client *irc.Conn) Module {
-	return Module{name, client, nil, nil, nil}
+	return Module{name, client, nil, nil, nil, 0}
 }
