@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
-	"regexp"
 	"strings"
 
 	"github.com/Gonk/go-v8"
@@ -63,10 +62,10 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 				continue
 			}
 
-			module := newModule(fileInfo.Name(), conn, v8ctx)
+			module := NewModule(fileInfo.Name(), conn)
 
 			// Init module with base script and its own script
-			ret, err := module.Init(string(baseScript) + string(script))
+			ret, err := module.Init(v8ctx, string(baseScript)+string(script))
 
 			if err != nil {
 				log.Error("Error loading module: %s\n%s", err, ret)
@@ -78,10 +77,6 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 	}
 
 	return
-}
-
-func newModule(name string, client *irc.Conn, context *v8.V8Context) Module {
-	return Module{name, client, context, make(map[*regexp.Regexp]v8.V8Function), make(map[*regexp.Regexp]v8.V8Function)}
 }
 
 func main() {

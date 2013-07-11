@@ -223,8 +223,8 @@ func _httpclient_get(args ...interface{}) interface{} {
 	return string(bytes)
 }
 
-func (m Module) Init(script string) (ret interface{}, err error) {
-	v8ctx := m.Context
+func (m *Module) Init(v8ctx *v8.V8Context, script string) (ret interface{}, err error) {
+	m.Context = v8ctx
 
 	// Add Go functions to context
 	v8ctx.AddFunc("_console_log", _console_log)
@@ -245,4 +245,8 @@ func (m Module) Init(script string) (ret interface{}, err error) {
 	ret, err = v8ctx.Eval(`module.exports(gonk)`)
 
 	return
+}
+
+func NewModule(name string, client *irc.Conn) Module {
+	return Module{name, client, nil, make(map[*regexp.Regexp]v8.V8Function), make(map[*regexp.Regexp]v8.V8Function)}
 }
