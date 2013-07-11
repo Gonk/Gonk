@@ -54,23 +54,37 @@ func (l LinkShortener) Hear(target string, line string, from string) (responded 
 func ShortenUrls(text string, shortenEmbeds bool, shortenImages bool, maxLength int) (int, string) {
 	var replacements []string
 
+	work := 0
+	workDone := make(chan bool)
+
 	matches := urlRegex.FindAllString(text, -1)
 	for _, match := range matches {
-		// Determine whether to shorten URL
-		if len(match) > maxLength && (shortenEmbeds || !IsEmbeddable(match) || (IsImage(match) && shortenImages)) {
-			uri, err := goisgd.Shorten(match)
-			if err != nil {
-				log.Error("LinkShortener Error:", match, err)
-				continue
+		work++
+
+		go func(match string) {
+			// Determine whether to shorten URL
+			if len(match) > maxLength && (shortenEmbeds || !IsEmbeddable(match) || (IsImage(match) && shortenImages)) {
+				uri, err := goisgd.Shorten(match)
+				if err != nil {
+					log.Error("LinkShortener Error:", match, err)
+					return
+				}
+
+				// Enable shortened image URLs to be embedded by capable clients
+				if shortenImages && IsImage(match) {
+					uri += "#.png"
+				}
+
+				replacements = append(replacements, match, uri)
 			}
 
-			// Enable shortened image URLs to be embedded by capable clients
-			if shortenImages && IsImage(match) {
-				uri += "#.png"
-			}
+			workDone <- true
+		}(match)
+	}
 
-			replacements = append(replacements, match, uri)
-		}
+	for work > 0 {
+		work--
+		<-workDone
 	}
 
 	r := strings.NewReplacer(replacements...)
