@@ -36,7 +36,7 @@ type Module struct {
 	hearMatchers    map[*regexp.Regexp]v8.V8Function
 }
 
-func (m Module) Respond(target string, line string, from string) (responded bool) {
+func (m *Module) Respond(target string, line string, from string) (responded bool) {
 	// Store the target and message
 	m.setTarget(target)
 	m.setMessage(line, from)
@@ -57,7 +57,7 @@ func (m Module) Respond(target string, line string, from string) (responded bool
 	return
 }
 
-func (m Module) Hear(target string, line string, from string) (responded bool) {
+func (m *Module) Hear(target string, line string, from string) (responded bool) {
 	// Store the target and message
 	m.setTarget(target)
 	m.setMessage(line, from)
@@ -78,15 +78,15 @@ func (m Module) Hear(target string, line string, from string) (responded bool) {
 	return
 }
 
-func (m Module) setTarget(target string) {
+func (m *Module) setTarget(target string) {
 	m.Context.Eval(`response.target = "` + target + `"`)
 }
 
-func (m Module) setMessage(message string, from string) {
+func (m *Module) setMessage(message string, from string) {
 	m.Context.Eval(`response.nick = "` + m.Client.Me().Nick + `"; response.message = {}; response.message.nick = "` + from + `"; response.message.text = "` + message + `"`)
 }
 
-func (m Module) setMatches(regex *regexp.Regexp, line string) int {
+func (m *Module) setMatches(regex *regexp.Regexp, line string) int {
 	matches := regex.FindStringSubmatch(line)
 	match, _ := json.Marshal(matches)
 
@@ -103,7 +103,7 @@ func _console_log(args ...interface{}) interface{} {
 	return ""
 }
 
-func (m Module) _robot_respond(args ...interface{}) interface{} {
+func (m *Module) _robot_respond(args ...interface{}) interface{} {
 	regex := args[0].(*regexp.Regexp)
 	fn := args[1].(v8.V8Function)
 
@@ -112,7 +112,7 @@ func (m Module) _robot_respond(args ...interface{}) interface{} {
 	return ""
 }
 
-func (m Module) _robot_hear(args ...interface{}) interface{} {
+func (m *Module) _robot_hear(args ...interface{}) interface{} {
 	regex := args[0].(*regexp.Regexp)
 	fn := args[1].(v8.V8Function)
 
@@ -121,7 +121,7 @@ func (m Module) _robot_hear(args ...interface{}) interface{} {
 	return ""
 }
 
-func (m Module) _msg_send(args ...interface{}) interface{} {
+func (m *Module) _msg_send(args ...interface{}) interface{} {
 	argc := len(args)
 
 	// Last argument is expected to be the message target
@@ -226,6 +226,9 @@ func _httpclient_get(args ...interface{}) interface{} {
 func (m *Module) Init(v8ctx *v8.V8Context, script string) (ret interface{}, err error) {
 	m.Context = v8ctx
 
+	m.respondMatchers = make(map[*regexp.Regexp]v8.V8Function)
+	m.hearMatchers = make(map[*regexp.Regexp]v8.V8Function)
+
 	// Add Go functions to context
 	v8ctx.AddFunc("_console_log", _console_log)
 	v8ctx.AddFunc("_robot_respond", m._robot_respond)
@@ -248,5 +251,5 @@ func (m *Module) Init(v8ctx *v8.V8Context, script string) (ret interface{}, err 
 }
 
 func NewModule(name string, client *irc.Conn) Module {
-	return Module{name, client, nil, make(map[*regexp.Regexp]v8.V8Function), make(map[*regexp.Regexp]v8.V8Function)}
+	return Module{name, client, nil, nil, nil}
 }
