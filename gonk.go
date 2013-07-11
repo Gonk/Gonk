@@ -6,7 +6,7 @@ import (
 	"fmt"
 	log "github.com/fluffle/golog/logging"
 	"os"
-	//"os/signal"
+	"os/signal"
 	"io/ioutil"
 	"regexp"
 	"strings"
@@ -71,10 +71,10 @@ func newModule(name string, client *irc.Conn, context *v8.V8Context) Module {
 }
 
 func main() {
-	//quitting := make(chan bool)
+	quitting := make(chan bool)
 	disconnecting := make(chan bool)
 
-	/*/ Set up ^C handler
+	// Set up ^C handler
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 	go func() {
@@ -82,7 +82,6 @@ func main() {
 		<-interrupt
 		quitting <- true
 	}()
-	//*/
 
 	// Parse flags
 	server := flag.String("server", "", "Hostname and/or port (e.g. 'localhost:6667')")
@@ -162,10 +161,12 @@ func main() {
 
 	log.Info(c.String())
 
-	defer func() {
-		//<-quitting
+	go func() {
+		<-quitting
 
 		c.Quit("*GONK*")
+
+		log.Info("Shutting down")
 
 		disconnecting <- true
 	}()
