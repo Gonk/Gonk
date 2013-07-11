@@ -74,12 +74,14 @@ func main() {
 	quitting := make(chan bool)
 	disconnecting := make(chan bool)
 
-	// Set up ^C handler
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
+	// Set up signal handlers
+	quitSignal := make(chan os.Signal, 1)
+	signal.Notify(quitSignal, os.Interrupt)
+	signal.Notify(quitSignal, os.Kill)
+
 	go func() {
-		// Quit on ^C
-		<-interrupt
+		// Shutdown if quitSignal received
+		<-quitSignal
 		quitting <- true
 	}()
 
