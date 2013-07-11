@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
 	log "github.com/fluffle/golog/logging"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
@@ -95,136 +95,144 @@ func (m Module) setMatches(regex *regexp.Regexp, line string) int {
 	return len(matches)
 }
 
+func _console_log(args ...interface{}) interface{} {
+	for _, arg := range args {
+		log.Warn("> %s", arg)
+	}
+
+	return ""
+}
+
+func (m Module) _robot_respond(args ...interface{}) interface{} {
+	regex := args[0].(*regexp.Regexp)
+	fn := args[1].(v8.V8Function)
+
+	m.respondMatchers[regex] = fn
+
+	return ""
+}
+
+func (m Module) _robot_hear(args ...interface{}) interface{} {
+	regex := args[0].(*regexp.Regexp)
+	fn := args[1].(v8.V8Function)
+
+	m.hearMatchers[regex] = fn
+
+	return ""
+}
+
+func (m Module) _msg_send(args ...interface{}) interface{} {
+	argc := len(args)
+
+	// Last argument is expected to be the message target
+	target := strings.Trim(args[argc-1].(string), `"`)
+
+	for _, arg := range args[:argc-1] {
+		text := strings.Trim(arg.(string), `"`)
+
+		// Shorten URLs in the response
+		_, text = mods.ShortenUrls(text, false, true, 25)
+
+		m.Client.Privmsg(target, text)
+	}
+
+	return ""
+}
+
+func _httpclient_post(args ...interface{}) interface{} {
+	url := strings.Trim(args[0].(string), `"`)
+
+	// Initialize client
+	client := &http.Client{}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBufferString(strings.Trim(args[2].(string), `"`)[1:]))
+	if err != nil {
+		log.Error(err.Error())
+		return ""
+	}
+
+	// Set request headers
+	var headers map[string]string
+	err = json.Unmarshal([]byte(args[1].(string)), &headers)
+	if err != nil {
+		log.Error(err.Error())
+		return ""
+	}
+
+	for header, value := range headers {
+		req.Header.Add(header, value)
+	}
+
+	// Send request
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error(err.Error())
+		return ""
+	}
+
+	// Get response
+	defer resp.Body.Close()
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return ""
+	}
+
+	return string(bytes)
+}
+
+func _httpclient_get(args ...interface{}) interface{} {
+	url := strings.Trim(args[0].(string), `"`)
+
+	// Initialize client
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Error(err.Error())
+		return ""
+	}
+
+	// Set request headers
+	var headers map[string]string
+	err = json.Unmarshal([]byte(args[1].(string)), &headers)
+	if err != nil {
+		log.Error(err.Error())
+		return ""
+	}
+
+	for header, value := range headers {
+		req.Header.Add(header, value)
+	}
+
+	// Send request
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error(err.Error())
+		return ""
+	}
+
+	// Get response
+	defer resp.Body.Close()
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return ""
+	}
+
+	return string(bytes)
+}
+
 func (m Module) Init(script string) (ret interface{}, err error) {
 	v8ctx := m.Context
 
-	v8ctx.AddFunc("_console_log", func(args ...interface{}) interface{} {
-		for _, arg := range args {
-			log.Warn("> %s", arg)
-		}
-
-		return ""
-	})
-
-	v8ctx.AddFunc("_robot_respond", func(args ...interface{}) interface{} {
-		regex := args[0].(*regexp.Regexp)
-		fn := args[1].(v8.V8Function)
-
-		m.respondMatchers[regex] = fn
-
-		return ""
-	})
-
-	v8ctx.AddFunc("_robot_hear", func(args ...interface{}) interface{} {
-		regex := args[0].(*regexp.Regexp)
-		fn := args[1].(v8.V8Function)
-
-		m.hearMatchers[regex] = fn
-
-		return ""
-	})
-
-	v8ctx.AddFunc("_msg_send", func(args ...interface{}) interface{} {
-		argc := len(args)
-
-		// Last argument is expected to be the message target
-		target := strings.Trim(args[argc-1].(string), `"`)
-
-		for _, arg := range args[:argc-1] {
-			text := strings.Trim(arg.(string), `"`)
-
-			// Shorten URLs in the response
-			_, text = mods.ShortenUrls(text, false, true, 25)
-
-			m.Client.Privmsg(target, text)
-		}
-
-		return ""
-	})
-
-	v8ctx.AddFunc("_httpclient_post", func(args ...interface{}) interface{} {
-		url := strings.Trim(args[0].(string), `"`)
-
-		// Initialize client
-		client := &http.Client{}
-
-		req, err := http.NewRequest("POST", url, bytes.NewBufferString(strings.Trim(args[2].(string), `"`)[1:]))
-		if err != nil {
-			log.Error(err.Error())
-			return ""
-		}
-
-		// Set request headers
-		var headers map[string]string
-		err = json.Unmarshal([]byte(args[1].(string)), &headers)
-		if err != nil {
-			log.Error(err.Error())
-			return ""
-		}
-
-		for header, value := range headers {
-			req.Header.Add(header, value)
-		}
-
-		// Send request
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Error(err.Error())
-			return ""
-		}
-
-		// Get response
-		defer resp.Body.Close()
-		bytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Error(err.Error())
-			return ""
-		}
-
-		return string(bytes)
-	})
-
-	v8ctx.AddFunc("_httpclient_get", func(args ...interface{}) interface{} {
-		url := strings.Trim(args[0].(string), `"`)
-
-		// Initialize client
-		client := &http.Client{}
-
-		req, err := http.NewRequest("GET", url, nil)
-		if err != nil {
-			log.Error(err.Error())
-			return ""
-		}
-
-		// Set request headers
-		var headers map[string]string
-		err = json.Unmarshal([]byte(args[1].(string)), &headers)
-		if err != nil {
-			log.Error(err.Error())
-			return ""
-		}
-
-		for header, value := range headers {
-			req.Header.Add(header, value)
-		}
-
-		// Send request
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Error(err.Error())
-			return ""
-		}
-
-		// Get response
-		defer resp.Body.Close()
-		bytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Error(err.Error())
-			return ""
-		}
-
-		return string(bytes)
-	})
+	// Add Go functions to context
+	v8ctx.AddFunc("_console_log", _console_log)
+	v8ctx.AddFunc("_robot_respond", m._robot_respond)
+	v8ctx.AddFunc("_robot_hear", m._robot_hear)
+	v8ctx.AddFunc("_msg_send", m._msg_send)
+	v8ctx.AddFunc("_httpclient_post", _httpclient_post)
+	v8ctx.AddFunc("_httpclient_get", _httpclient_get)
 
 	// Load script
 	ret, err = v8ctx.Eval(script)

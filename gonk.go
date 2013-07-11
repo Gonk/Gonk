@@ -5,9 +5,9 @@ import (
 	"flag"
 	"fmt"
 	log "github.com/fluffle/golog/logging"
+	"io/ioutil"
 	"os"
 	"os/signal"
-	"io/ioutil"
 	"regexp"
 	"strings"
 
