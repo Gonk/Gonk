@@ -177,7 +177,7 @@ func main() {
 			log.Info("Joining %s", channel)
 
 			conn.Join(channel)
-			conn.Privmsg(channel, "*GONK*")
+			conn.Privmsg(channel, "*"+strings.ToUpper(*gonkNick)+"*")
 		}
 	})
 
@@ -222,7 +222,7 @@ func main() {
 	go func() {
 		<-quitting
 
-		c.Quit("*GONK*")
+		c.Quit("*" + strings.ToUpper(*gonkNick) + "*")
 
 		log.Info("Shutting down")
 
