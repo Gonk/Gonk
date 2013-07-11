@@ -30,6 +30,19 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 		log.Fatal(err.Error())
 	}
 
+	// Read base module script
+	file, err := os.Open("module.js")
+	if err != nil {
+		log.Fatal("Error reading base module script:", err)
+	}
+
+	defer file.Close()
+
+	baseScript, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Fatal("Error reading base module script:", err)
+	}
+
 	for _, fileInfo := range scripts {
 		if !fileInfo.IsDir() {
 			if !strings.HasSuffix(fileInfo.Name(), "js") {
@@ -52,7 +65,8 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 
 			module := newModule(fileInfo.Name(), conn, v8ctx)
 
-			ret, err := module.Init(string(script))
+			// Init module with base script and its own script
+			ret, err := module.Init(string(baseScript) + string(script))
 
 			if err != nil {
 				log.Error("Error loading module: %s\n%s", err, ret)
