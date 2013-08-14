@@ -92,6 +92,7 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 						}
 					case err := <-watcher.Error:
 						log.Error("Error watching file: %s", filename, err)
+						continue
 					}
 
 					// Reload script
@@ -127,19 +128,12 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 }
 
 func main() {
-	quitting := make(chan bool)
-	disconnecting := make(chan bool)
+	exiting := make(chan bool)
 
 	// Set up signal handlers
-	quitSignal := make(chan os.Signal, 1)
-	signal.Notify(quitSignal, os.Interrupt)
-	signal.Notify(quitSignal, os.Kill)
-
-	go func() {
-		// Shutdown if quitSignal received
-		<-quitSignal
-		quitting <- true
-	}()
+	quitting := make(chan os.Signal, 1)
+	signal.Notify(quitting, os.Interrupt)
+	signal.Notify(quitting, os.Kill)
 
 	// Parse flags
 	server := flag.String("server", "", "Hostname and/or port (e.g. 'localhost:6667')")
@@ -183,7 +177,7 @@ func main() {
 
 	c.HandleFunc(irc.DISCONNECTED, func(conn *irc.Conn, line *irc.Line) {
 		log.Info("Disconnected from server; shutting down")
-		disconnecting <- true
+		exiting <- true
 	})
 
 	c.HandleFunc("privmsg", func(conn *irc.Conn, line *irc.Line) {
@@ -212,22 +206,28 @@ func main() {
 		}()
 	})
 
-	err := c.ConnectTo(*server, *password)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	go func() {
+		err := c.ConnectTo(*server, *password)
+		if err != nil {
+			log.Error(err.Error())
 
-	log.Info(c.String())
+			log.Info("Unable to connect to server")
+
+			exiting <- true
+		} else {
+			log.Info(c.String())
+		}
+	}()
 
 	go func() {
 		<-quitting
 
 		c.Quit("*" + strings.ToUpper(*gonkNick) + "*")
 
-		log.Info("Shutting down")
-
-		disconnecting <- true
+		exiting <- true
 	}()
 
-	<-disconnecting
+	<-exiting
+
+	log.Info("Shutting down")
 }
