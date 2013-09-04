@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/NickPresta/GoURLShortener"
 	irc "github.com/Gonk/goirc/client"
+	"github.com/NickPresta/GoURLShortener"
 )
 
 var urlRegex = regexp.MustCompile(`(http|https|ftp|ftps)\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,4}(/\S*)?`)
@@ -67,6 +67,8 @@ func ShortenUrls(text string, shortenEmbeds bool, shortenImages bool, maxLength 
 				uri, err := goisgd.Shorten(match)
 				if err != nil {
 					log.Error("LinkShortener Error:", match, err)
+
+					workDone <- true
 					return
 				}
 
