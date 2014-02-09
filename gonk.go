@@ -150,7 +150,7 @@ func main() {
 	}
 
 	// Setup IRC client
-	c := irc.SimpleClient(*gonkNick)
+	c := irc.SimpleClient(*gonkNick, *gonkNick)
 
 	if *ssl {
 		c.Config().SSL = true
