@@ -127,6 +127,19 @@ func loadModules(conn *irc.Conn) (modules []IModule) {
 	return
 }
 
+func connect(c *irc.Conn, server string, password string, exiting chan bool) {
+	err := c.ConnectTo(server, password)
+	if err != nil {
+		log.Error(err.Error())
+
+		log.Info("Unable to connect to server")
+
+		exiting <- true
+	} else {
+		log.Info(c.String())
+	}
+}
+
 func main() {
 	exiting := make(chan bool)
 
@@ -176,8 +189,8 @@ func main() {
 	})
 
 	c.HandleFunc(irc.DISCONNECTED, func(conn *irc.Conn, line *irc.Line) {
-		log.Info("Disconnected from server; shutting down")
-		exiting <- true
+		log.Info("Disconnected from server; attempting to reconnect")
+		go connect(c, *server, *password, exiting)
 	})
 
 	c.HandleFunc("privmsg", func(conn *irc.Conn, line *irc.Line) {
@@ -207,16 +220,7 @@ func main() {
 	})
 
 	go func() {
-		err := c.ConnectTo(*server, *password)
-		if err != nil {
-			log.Error(err.Error())
-
-			log.Info("Unable to connect to server")
-
-			exiting <- true
-		} else {
-			log.Info(c.String())
-		}
+		connect(c, *server, *password, exiting)
 	}()
 
 	go func() {
